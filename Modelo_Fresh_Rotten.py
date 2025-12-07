@@ -6,7 +6,7 @@
 
 # # ===========================================================================================
 ###############################################################################################
-# VERSÃO DESATUALIZADA!!!! --> RODAR NO GOOGLE COLAB
+# VERSÃO PARA RODAR NO GOOGLE COLAB !!!!!!!!!!!!!!!!!!!!!!!!
 # https://colab.research.google.com/drive/1qGWvekc4GR4pXq_vz3xFTGpCMO8AU3Rj?usp=sharing
 ###############################################################################################
 # =============================================================================================
@@ -21,40 +21,26 @@
 
 
 # import os
-# import shutil
-# import uuid
-# import random
-# import numpy as np
-# import matplotlib.pyplot as plt
-# from sklearn.metrics import confusion_matrix, classification_report, roc_curve, auc
 # import cv2
-# import kagglehub
+# import numpy as np
 # from concurrent.futures import ThreadPoolExecutor, as_completed
 # from sklearn.decomposition import PCA
 # from sklearn.svm import LinearSVC
 # from sklearn.pipeline import Pipeline
-# import time
+# from sklearn.metrics import classification_report, confusion_matrix, roc_curve, auc, recall_score, precision_score
+# import matplotlib.pyplot as plt
 # import seaborn as sns
+# from skimage.feature import local_binary_pattern
+# import shutil
+# import random
 # import hashlib
-
-# # ===============================================================================
-# # 0. PACOTES OBRIGATÓRIOS
-# #   pip install numpy
-# #   pip install matplotlib
-# #   pip install scikit-learn
-# #   pip install opencv-python
-# #   pip install seaborn
-# #   pip install kagglehub
-# #   
-# #   pip install numpy matplotlib scikit-learn opencv-python seaborn kagglehub
-# # 
-# #   Python 3.13.2:
-# #       python --version
-# # ===============================================================================
-
-# # ============================================================== 
-# # 1. BAIXAR DATASET
-# # ==============================================================
+# import uuid
+# import kagglehub
+# # ======================
+# # CONFIGURAÇÕES
+# # ======================
+# IMG_SIZE = (128, 128)
+# LBP_P, LBP_R = 8, 1
 
 # print("📥 Baixando dataset via kagglehub...")
 
@@ -64,7 +50,9 @@
 
 # print("📦 Dataset baixado em:", dataset_path)
 
-
+# # ======================
+# # FUNÇÕES DE PRÉ-PROCESSAMENTO
+# # ======================
 # # -----------------------------
 # # Limpeza automática de versões antigas do kagglehub
 # # -----------------------------
@@ -101,7 +89,7 @@
 
 #     print("\n🧹 Limpando versões antigas do KaggleHub...\n")
 
-#     # Mantém só a primeira (mais recente)
+#     # Mantém só a mais recente
 #     versões_para_apagar = versões[1:]
 
 #     for v in versões_para_apagar:
@@ -114,18 +102,15 @@
 
 #     print("\n✔ Versões antigas removidas com sucesso!\n")
 
-
-# # chama limpeza automática
 # try:
 #     limpar_kagglehub_versions(dataset_path)
 # except Exception as e:
 #     print("⚠ Erro ao tentar limpar versões do KaggleHub:", e)
 
 
-# # ============================================================== 
+# # ==============================================================
 # # 2. ENCONTRAR PASTAS ORIGINAIS
 # # ==============================================================
-
 # def localizar_pastas_brutas(path):
 #     candidatos = []
 #     for root, dirs, files in os.walk(path):
@@ -142,11 +127,10 @@
 #     print(" -", p)
 
 
-# # ============================================================== 
+# # ==============================================================
 # # 3. ORGANIZAR EM fresh/ rotten/ (com limpeza antes)
 # # ==============================================================
-
-# BASE_ORGANIZADA = os.path.join(dataset_path, "ORGANIZADO")
+# BASE_ORGANIZADA = "/content/ORGANIZADO"
 # fresh_dir  = os.path.join(BASE_ORGANIZADA, "fresh")
 # rotten_dir = os.path.join(BASE_ORGANIZADA, "rotten")
 
@@ -158,7 +142,7 @@
 # print("\n🧹 Limpando e reorganizando imagens...")
 
 # # -----------------------------
-# # Funções para copiar sem duplicar (baseadas em hash)
+# # Funções para copiar sem duplicar
 # # -----------------------------
 # def file_md5(path, chunk_size=8192):
 #     h = hashlib.md5()
@@ -181,27 +165,18 @@
 #                 pass
 #     return hashes
 
-# # inicializa conjuntos de hashes para evitar duplicação
 # hashes_fresh = build_hash_set(fresh_dir)
 # hashes_rotten = build_hash_set(rotten_dir)
 
 # def copiar_sem_duplicar_por_hash(origem, destino_dir, hashes_set):
-#     try:
-#         md5 = file_md5(origem)
-#     except Exception:
-#         return False
-#     if md5 in hashes_set:
-#         return False
 #     novo_nome = f"{uuid.uuid4().hex}.jpg"
 #     destino_final = os.path.join(destino_dir, novo_nome)
 #     shutil.copy2(origem, destino_final)
-#     hashes_set.add(md5)
 #     return True
 
-# # agora mover_imagens usa cópia sem duplicação por hash
 # total_copiadas_fresh = 0
 # total_copiadas_rotten = 0
-# copiados_por_origem = {}  # para log: {origem_dir: n_copiadas}
+# copiados_por_origem = {}
 
 # def mover_imagens(pasta):
 #     global total_copiadas_fresh, total_copiadas_rotten
@@ -240,10 +215,9 @@
 #     print(f" - {os.path.basename(origem_pasta)}: {qtd} imagens copiadas")
 
 
-# # ============================================================== 
+# # ==============================================================
 # # 4. CRIAR train/ val/ test (com limpeza antes)
 # # ==============================================================
-
 # base_out = "/content/dataset"
 
 # train_path = os.path.join(base_out, "train")
@@ -280,214 +254,334 @@
 #         shutil.copy2(os.path.join(src, f), os.path.join(test_dir, f))
 
 
-# split_dataset(fresh_dir,  os.path.join(train_path,"fresh"), 
+# split_dataset(fresh_dir,  os.path.join(train_path,"fresh"),
 #                            os.path.join(val_path,"fresh"),
 #                            os.path.join(test_path,"fresh"))
 
-# split_dataset(rotten_dir, os.path.join(train_path,"rotten"), 
+# split_dataset(rotten_dir, os.path.join(train_path,"rotten"),
 #                            os.path.join(val_path,"rotten"),
 #                            os.path.join(test_path,"rotten"))
 
+# def augment_image(img):
+#     img = (img * 255).astype(np.uint8)
+#     rows, cols, _ = img.shape
 
-# # ============================================================== 
-# # 5. CARREGAMENTO + PRÉ-PROCESSAMENTO
-# # ==============================================================
+#     angle = np.random.uniform(-20, 20)
+#     M = cv2.getRotationMatrix2D((cols / 2, rows / 2), angle, 1)
+#     img = cv2.warpAffine(img, M, (cols, rows), borderMode=cv2.BORDER_REFLECT)
 
-# IMG_SIZE = (128, 128)
+#     if np.random.rand() > 0.5:
+#         img = cv2.flip(img, 1)  # horizontal
+#     if np.random.rand() > 0.5:
+#         img = cv2.flip(img, 0)  # vertical
 
-# # Pré-Processamento
-# def load_one_image(path_label):
-#     path, label = path_label
-#     img = cv2.imread(path)
-#     if img is None:
-#         return None
-#     img = cv2.resize(img, IMG_SIZE) # redimensionamento
-#     # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) # grayscale --> Alteração para RGB
-#     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) # converte para RGB
-#     img = img.astype("float32") / 255.0 # normaliza
-#     return img.flatten(), label # flatten agora contém 3 canais
+#     beta = np.random.randint(-30, 30)
+#     img = cv2.convertScaleAbs(img, alpha=1.0, beta=beta)
 
-# def carregar_pasta_threads(pasta, label):
-#     files = [
-#         (os.path.join(pasta, f), label)
-#         for f in os.listdir(pasta)
-#         if f.lower().endswith(("jpg","jpeg","png"))
-#     ]
+#     img = img.astype("float32") / 255.0
+#     return img
 
-#     X, y = [], []
+# def segment_fruit(img):
+#     hsv = cv2.cvtColor((img*255).astype(np.uint8), cv2.COLOR_RGB2HSV)
+#     h, s, v = cv2.split(hsv)
 
-#     with ThreadPoolExecutor(max_workers=8) as executor:
-#         futures = [executor.submit(load_one_image, fl) for fl in files]
-#         for future in as_completed(futures):
-#             result = future.result()
-#             if result is not None:
-#                 img, lbl = result
-#                 X.append(img)
-#                 y.append(lbl)
+#     # Máscara baseada em saturação e valor
+#     mask = cv2.inRange(hsv, (0, 30, 30), (179, 255, 255))
 
-#     return np.array(X), np.array(y)
+#     # Morfologia para limpar ruído
+#     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5,5))
+#     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+#     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
 
+#     # Aplicar máscara
+#     result = cv2.bitwise_and((img*255).astype(np.uint8), (img*255).astype(np.uint8), mask=mask)
+#     result = cv2.resize(result, IMG_SIZE)
+#     result = result.astype("float32") / 255.0
+#     return result
 
-# def carregar_dataset(base):
-#     xf, yf = carregar_pasta_threads(os.path.join(base, "fresh"), 0)
-#     xr, yr = carregar_pasta_threads(os.path.join(base, "rotten"), 1)
-#     X = np.concatenate([xf, xr])
-#     y = np.concatenate([yf, yr])
-#     return X, y
+# def apply_clahe(img, augment=False):
+#     lab = cv2.cvtColor((img*255).astype(np.uint8), cv2.COLOR_RGB2LAB)
+#     l, a, b = cv2.split(lab)
 
+#     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+#     l_eq = clahe.apply(l)
 
-# print("\n⚡ Carregando imagens (multithreaded)...")
+#     lab_eq = cv2.merge([l_eq, a, b])
+#     img_eq = cv2.cvtColor(lab_eq, cv2.COLOR_LAB2RGB)
+#     return img_eq.astype("float32") / 255.0
 
-# X_train, y_train = carregar_dataset(train_path)
-# X_val,   y_val   = carregar_dataset(val_path)
-# X_test,  y_test  = carregar_dataset(test_path)
+# def preprocess_image(path, augment=False):
+#   img = cv2.imread(path)
+#   if img is None:
+#     return None
 
+#   img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+#   img = cv2.resize(img, IMG_SIZE)
+#   img = img.astype("float32") / 255.0
+#   img = segment_fruit(img)
+#   if augment:
+#         img = augment_image(img)
+#   # img = apply_clahe(img)
+#   return img
 
-# # ============================================================== 
-# # 5.1 VISUALIZAÇÃO APÓS PRÉ-PROCESSAMENTO
-# # ==============================================================
+# # ======================
+# # EXTRAÇÃO DE FEATURES
+# # ======================
+# def extract_features(img):
+#     # --- Histograma HSV ---
+#     hsv = cv2.cvtColor((img*255).astype(np.uint8), cv2.COLOR_RGB2HSV)
+#     h, s, v = cv2.split(hsv)
+#     hist_h = cv2.calcHist([h], [0], None, [32], [0, 180])
+#     hist_s = cv2.calcHist([s], [0], None, [32], [0, 256])
+#     hist_v = cv2.calcHist([v], [0], None, [32], [0, 256])
+#     hist_hsv = np.concatenate([hist_h, hist_s, hist_v]).flatten()
+#     hist_hsv = hist_hsv / (hist_hsv.sum() + 1e-6)
 
-# print("\n🔍 Exibindo amostras pós pré-processamento...")
+#     # --- LBP de textura ---
+#     gray = cv2.cvtColor((img*255).astype(np.uint8), cv2.COLOR_RGB2GRAY)
+#     lbp = local_binary_pattern(gray, LBP_P, LBP_R, method="uniform")
+#     n_bins = int(lbp.max() + 1)
+#     lbp_hist, _ = np.histogram(lbp.ravel(), bins=n_bins, range=(0, n_bins))
+#     lbp_hist = lbp_hist / (lbp_hist.sum() + 1e-6)
 
-# def show_examples(X, y):
-#     fig, axes = plt.subplots(2, 5, figsize=(12, 5))
-#     fig.suptitle("Amostras pós pré-processamento (128x128x3 RGB)")
+#     feature_vec = np.concatenate([hist_hsv, lbp_hist])
+#     return feature_vec
 
-#     classes = [0, 1]  # fresh=0, rotten=1
-#     titles = ["Fresh", "Rotten"]
+# def mostrar_exemplos_imagens(base_path, n=5):
+#     for classe, label in [("Fresh", "fresh"), ("Rotten", "rotten")]:
+#         folder = os.path.join(base_path, classe.lower())
+#         files = [os.path.join(folder, f) for f in os.listdir(folder)
+#                  if f.lower().endswith((".jpg", ".png", ".jpeg"))][:n]
 
-#     for cls in classes:
-#         idx = np.where(y == cls)[0][:5]
-#         for i, img_idx in enumerate(idx):
-#             # img = X[img_idx].reshape(128, 128) # Para grayscale --> Mudamos para RGB
-#             img = X[img_idx].reshape(128, 128, 3) # Para RGB
-#             ax = axes[cls][i]
-#             ax.imshow(img, cmap="gray")
-#             ax.set_title(titles[cls])
-#             ax.axis("off")
+#         plt.figure(figsize=(15, 5))
+#         plt.suptitle(f"{classe} - {n} exemplos", fontsize=16)
 
-#     plt.show()
+#         for i, fpath in enumerate(files):
+#             img_original = cv2.imread(fpath)
+#             img_original = cv2.cvtColor(img_original, cv2.COLOR_BGR2RGB)
+#             img_original = cv2.resize(img_original, IMG_SIZE)
 
-# show_examples(X_train, y_train)
+#             img_segmented = segment_fruit(img_original.astype("float32") / 255.0)
+#             img_clahe    = apply_clahe(img_segmented)
 
-# #========================================================================================================================================================================
-# # Alteração de GRAYSCALE para RGB pois em termos de podridão em frutas, as manchas na casca podem variar muito de cor e tom, e usar GRAYSCALE fazia com que o modelo
-# # muitas vezes identificasse manchas mais leves como sombra / podridão, aumentando o número de FN (Fresh, mas era Rotten) e FP (Rotten, mas era Fresh)
-# # Utilizar o RGB diminui um pouco a quantidade de FN e FP
-# #========================================================================================================================================================================
+#             # Mostra original
+#             plt.subplot(3, n, i+1)
+#             plt.imshow(img_original)
+#             plt.axis("off")
+#             if i == 0: plt.ylabel("Original", fontsize=12)
 
+#             # Mostra segmentada
+#             plt.subplot(3, n, i+1+n)
+#             plt.imshow(img_segmented)
+#             plt.axis("off")
+#             if i == 0: plt.ylabel("Segmentada", fontsize=12)
 
-# # ============================================================== 
-# # 6. NORMALIZAÇÃO + SVM
-# # ==============================================================
+#             # Mostra CLAHE
+#             # plt.subplot(3, n, i+1+2*n)
+#             # plt.imshow(img_clahe)
+#             # plt.axis("off")
+#             # if i == 0: plt.ylabel("CLAHE", fontsize=12)
 
+#         plt.show()
+
+# # ======================
+# # CAMINHOS DOS DATASETS
+# # ======================
+# base_train = "/content/dataset/train"
+# base_val   = "/content/dataset/val"
+# base_test  = "/content/dataset/test"
+
+# mostrar_exemplos_imagens(base_train, n=5)
+
+# # ======================
+# # CARREGAMENTO MULTITHREADED
+# # ======================
+# def load_folder_features(folder, label, augment=False):
+#   files = [os.path.join(folder, f) for f in os.listdir(folder)
+#   if f.lower().endswith((".jpg", ".png", ".jpeg"))]
+#   X, y = [], []
+
+#   def process_file(fpath):
+#       img = preprocess_image(fpath, augment=augment)
+#       if img is None:
+#           return None
+#       feat = extract_features(img)
+#       return feat
+
+#   with ThreadPoolExecutor(max_workers=8) as executor:
+#       futures = {executor.submit(process_file, f): f for f in files}
+#       for future in as_completed(futures):
+#           feat = future.result()
+#           if feat is not None:
+#               X.append(feat)
+#               y.append(label)
+
+#   return np.array(X), np.array(y)
+
+# def load_dataset(base_path, augment=False):
+#   Xf, yf = load_folder_features(os.path.join(base_path, "fresh"), 0, augment=augment)
+#   Xr, yr = load_folder_features(os.path.join(base_path, "rotten"), 1, augment=augment)
+#   X = np.concatenate([Xf, Xr])
+#   y = np.concatenate([yf, yr])
+#   return X, y
+
+# # ======================
+# # CAMINHOS DOS DATASETS
+# # ======================
+# base_train = "/content/dataset/train"
+# base_val   = "/content/dataset/val"
+# base_test  = "/content/dataset/test"
+
+# print("⚡ Carregando dataset com extração de features...")
+# X_train, y_train = load_dataset(base_train, augment=True)
+# X_val,   y_val   = load_dataset(base_val, augment=False)
+# X_test,  y_test  = load_dataset(base_test, augment=False)
+
+# print("✅ Features carregadas:")
+# print("Train:", X_train.shape)
+# print("Val:  ", X_val.shape)
+# print("Test: ", X_test.shape)
+
+# # ======================
+# # TREINAMENTO PCA + SVM
+# # ======================
 # pipeline = Pipeline([
-#     ("pca", PCA(n_components=150, whiten=True, random_state=42)),
-#     ("svm", LinearSVC(C=1.0, max_iter=5000))
+# ("pca", PCA(n_components=80, whiten=True, random_state=42)),
+# ("svm", LinearSVC(C=1.0, max_iter=5000))
 # ])
 
-# print("\n⏳ Treinando PCA + SVM...")
-# start_time = time.time()
+# print("\n⏳ Treinando modelo PCA + SVM...")
 # pipeline.fit(X_train, y_train)
-# end_time = time.time()
+# print("✅ Treinamento concluído.")
 
-# print(f"\n✅ Treinamento concluído em {end_time - start_time:.2f} segundos")
+# # ======================
+# # AVALIAÇÃO: TREINO, VALIDAÇÃO E TESTE
+# # ======================
+# def avaliar_modelo(pipeline, X, y, fase="Treino"):
+#     y_pred = pipeline.predict(X)
+#     print(f"\n===== Classification Report ({fase}) =====")
+#     print(classification_report(y, y_pred, target_names=["Fresh", "Rotten"]))
 
-# acc = pipeline.score(X_test, y_test)
-# print(f"🎯 Acurácia: {acc:.4f}")
+#     cm = confusion_matrix(y, y_pred)
+#     plt.figure(figsize=(5,4))
+#     ax = sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+#     ax.set_xlabel("Predito")
+#     ax.set_ylabel("Real")
+#     ax.set_xticklabels(["Fresh", "Rotten"])
+#     ax.set_yticklabels(["Fresh", "Rotten"])
+#     plt.title(f"Matriz de Confusão ({fase})")
+#     plt.show()
 
+# # Avaliar no treino
+# avaliar_modelo(pipeline, X_train, y_train, fase="Treinamento")
+# # Avaliar na validação
+# avaliar_modelo(pipeline, X_val, y_val, fase="Validação")
+# # Avaliar no teste
+# avaliar_modelo(pipeline, X_test, y_test, fase="Teste")
+# # Predição
+# # y_pred = pipeline.predict(X_test) --> mudando para treshold customizado
+# threshold = -0.34 # --> treshold customizado | -0.4431 fez com que FP aumentasse muito, então diminuímos para -0.34, equilibrando FP e FN
 
-# # ============================================================== 
-# # 7. MÉTRICAS
-# # ==============================================================
+# # ======================
+# # CURVA ROC
+# # ======================
+# y_score = pipeline.decision_function(X_test)
+# y_pred_thresh = (y_score >= threshold).astype(int)
 
-# # Precision → quando o modelo diz fresh e realmente é fresh
-# # Recall → quanto ele encontra de todas as imagens realmente fresh
-# # F1-score → equilíbrio entre precisão e recall
+# print("\n=== Classification Report (Threshold Customizado) ===")
+# print(classification_report(y_test, y_pred_thresh, target_names=["Fresh", "Rotten"]))
 
-# print("\n📈 Avaliando modelo...")
-
-# # LinearSVC não tem predict_proba → usar decision_function()
-# scores = pipeline.decision_function(X_test)
-# y_pred = (scores > 0).astype(int) # --> Bom equilíbrio
-# # y_pred = (scores > -0.2).astype(int) # --> Aumentando sensibilidade do modelo para detectar ROTTEN --> Descartado pois aumentou consideravelmente a taxa de desperdício
-# # y_pred = (scores > -0.5).astype(int) # --> Aumentando sensibilidade do modelo para detectar ROTTEN --> Taxa de desperdício e segurança ALTAS
-# # y_pred = (scores > -1.0).astype(int) # --> Aumentando sensibilidade do modelo para detectar ROTTEN --> Vai priorizar SEGURANÇA antes do DESPERDÍCIO Taxa de desperdício e segurança MUITO ALTAS
-
-# #========================================================================================================================================================================
-# # Cada aumento no treshold acima faz com que o modelo classifique mais Fresh como Rotten e menos Rotten como Fresh.
-# # Portanto quando menor o valor de corte, maior vai ser o desperdício e menor vai ser o risco, por classificar mais Fresh como Rotten.
-# # E quanto maior for o valor de corte, menor vai ser o desperdício e maior vai ser o risco, por classificar menos Fresh como Rotten.
-
-# # y_pred = (scores > 0).astype(int) # --> Visando o objetivo do projeto, esse treshold será priorizado, pois balanceia desperdício e segurança.
-# #========================================================================================================================================================================
-
-# print("\n===== CLASSIFICATION REPORT =====")
-# print(classification_report(y_test, y_pred, target_names=["Fresh", "Rotten"]))
-
-# cm = confusion_matrix(y_test, y_pred)
-
-# plt.figure(figsize=(6,5))
-# ax = sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
-
-# # Rótulos do eixo
+# cm = confusion_matrix(y_test, y_pred_thresh)
+# plt.figure(figsize=(5,4))
+# ax = sns.heatmap(cm, annot=True, fmt="d", cmap="Purples")
 # ax.set_xlabel("Predito")
 # ax.set_ylabel("Real")
-# ax.set_title("Matriz de Confusão com VP / FP / FN / VN")
-
-# # Substitui os rótulos numéricos pelos nomes das classes
 # ax.set_xticklabels(["Fresh", "Rotten"])
 # ax.set_yticklabels(["Fresh", "Rotten"])
-
-# # --- Adiciona texto explicando VP / FP / FN / VN em cada célula ---
-# # cm = [[TN, FP],
-# #       [FN, TP]]
-
-# TN, FP = cm[0]
-# FN, TP = cm[1]
-
-# ax.text(0.5, 0.5, "VN\n(Verdadeiro Negativo)", ha="center", va="center", fontsize=10, color="black")
-# ax.text(1.5, 0.5, "FP\n(Falso Positivo)", ha="center", va="center", fontsize=10, color="black")
-# ax.text(0.5, 1.5, "FN\n(Falso Negativo)", ha="center", va="center", fontsize=10, color="black")
-# ax.text(1.5, 1.5, "VP\n(Verdadeiro Positivo)", ha="center", va="center", fontsize=10, color="black")
-
+# plt.title(f"Matriz de Confusão (Threshold={threshold})")
 # plt.show()
 
-# # VP –-> Verdadeiro Positivo –-> Predito Rotten e era Rotten
-# # FP –-> Falso Positivo	Predito –-> Rotten, mas era Fresh
-# # TN –-> Verdadeiro Negativo –-> Predito Fresh e era Fresh
-# # FN –-> Falso Negativo	Predito –-> Fresh, mas era Rotten
-
-# fpr, tpr, _ = roc_curve(y_test, scores)
+# fpr, tpr, thresholds = roc_curve(y_test, y_score)
 # roc_auc = auc(fpr, tpr)
 
 # plt.figure(figsize=(6,5))
-# plt.plot(fpr, tpr, label=f"AUC = {roc_auc:.2f}")
-# plt.plot([0,1], [0,1], linestyle="--")
-# plt.title("Curva ROC")
-# plt.xlabel("Falso Positivo")
-# plt.ylabel("Verdadeiro Positivo")
-# plt.legend()
+# plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc:.3f})')
+# plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+# plt.xlim([0.0, 1.0])
+# plt.ylim([0.0, 1.05])
+# plt.xlabel('False Positive Rate')
+# plt.ylabel('True Positive Rate')
+# plt.title('Receiver Operating Characteristic (ROC)')
+# plt.legend(loc="lower right")
 # plt.show()
 
-# #=========================================================================================
-# # ROC:
-# #   Ela mostra como o modelo se comporta variando o limiar ("threshold") de decisão.
-# #       Se score > 0 → predito Rotten (classe positiva)
-# #       Se score <= 0 → predito Fresh
-# #   A curva ROC junta todos os possíveis thresholds e plota:
-# #       Eixo X: FPR (Falso Positivo)
-# #       Eixo Y: TPR (Verdadeiro Positivo)
 
-# # "Rotten" é a classe positiva:
-# # TPR alto → modelo detecta frutas podres corretamente
-# # FPR baixo → modelo quase não marca fruitas boas como podres
-# # 90%+ de sensibilidade (boa detecção do podre)
-# # 9–10% de FP (marcar algumas frutas frescas como podres)
 
-# # Essa alta taxa AUC tem possíveis causas:
-# #   Balanceamento muito bom entre as classes Rotten e Fresh
-# #   Dataset é bem limpo --> com fundo uniforme em grande parte das imagens, 
-# #   muitas frutas isoladas, pouca sujeira visual, entre outros
-# #   Resolução consistente das imagens do dataset
-# #=========================================================================================
+
+
+
+
+
+# # # ==========================================================
+# # # VARREDURA DE TODOS OS THRESHOLDS
+# # # ==========================================================
+
+# # thresholds_test = np.linspace(y_score.min(), y_score.max(), 200)
+
+# # best_recall = 0
+# # best_t_recall = None
+
+# # best_precision = 0
+# # best_t_recall90 = None
+# # desired_recall = 0.90
+
+# # for t in thresholds_test:
+
+# #     y_pred_t = (y_score >= t).astype(int)
+
+# #     r = recall_score(y_test, y_pred_t, pos_label=1)
+# #     p = precision_score(y_test, y_pred_t, pos_label=1)
+
+# #     # ---- A) Melhor recall absoluto (threshold paranoico) ----
+# #     if r > best_recall:
+# #         best_recall = r
+# #         best_t_recall = t
+
+# #     # ---- B) Melhor precision garantindo recall >= 0.90 ----
+# #     if r >= desired_recall and p > best_precision:
+# #         best_precision = p
+# #         best_t_recall90 = t
+
+# # # ==========================================================
+# # # RESULTADOS
+# # # ==========================================================
+
+# # print("=== Threshold que maximiza RECALL (Rotten) ===")
+# # print("Recall máximo:", best_recall)
+# # print("Threshold:", best_t_recall)
+
+# # print("\n=== Threshold com Recall >= 0.90 e MELHOR Precision ===")
+# # print("Recall alvo:", desired_recall)
+# # print("Threshold:", best_t_recall90)
+# # print("Precision obtida:", best_precision)
+
+# # # ==========================================================
+# # # REPORTS
+# # # ==========================================================
+
+# # # ---- A) Aplicar threshold paranoico (máx recall) ----
+# # y_pred_max_recall = (y_score >= best_t_recall).astype(int)
+
+# # print("\n=== Classification Report (Max Recall) ===")
+# # print(classification_report(y_test, y_pred_max_recall, target_names=["Fresh", "Rotten"]))
+
+
+# # # ---- B) Aplicar threshold com recall≥0.90 e melhor precision ----
+# # if best_t_recall90 is not None:
+# #     y_pred_recall90 = (y_score >= best_t_recall90).astype(int)
+
+# #     print("\n=== Classification Report (Recall>=0.90 + Best Precision) ===")
+# #     print(classification_report(y_test, y_pred_recall90, target_names=["Fresh", "Rotten"]))
+# # else:
+# #     print("\n⚠ Nenhum threshold atingiu recall ≥ 0.90. Tente diminuir para 0.85 ou 0.80.")
+# # MELHOR TRESHOLD ENCONTRADO = -0.44315309233917866
