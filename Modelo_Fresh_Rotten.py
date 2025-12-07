@@ -585,3 +585,115 @@
 # # else:
 # #     print("\n⚠ Nenhum threshold atingiu recall ≥ 0.90. Tente diminuir para 0.85 ou 0.80.")
 # # MELHOR TRESHOLD ENCONTRADO = -0.44315309233917866
+
+
+
+
+
+
+# # ===========================================================================================
+###############################################################################################
+# SEPARAR EM UMA CÉLULA A PARTE!!!!!!!
+###############################################################################################
+# =============================================================================================
+
+# import urllib.request
+# import cv2
+# import numpy as np
+# import matplotlib.pyplot as plt
+
+# # ======================
+# # FUNÇÃO PARA BAIXAR IMAGEM
+# # ======================
+
+# def baixar_imagem_url(url, save_path="imagem_externa.jpg"):
+#   print("📥 Baixando imagem externa...")
+#   urllib.request.urlretrieve(url, save_path)
+#   return save_path
+
+# # ======================
+# # FUNÇÃO PARA EXTRAÇÃO DE FEATURES (HSV + LBP)
+# # ======================
+
+# def extract_features_for_url(img):
+#   # --- Histograma HSV ---
+#   hsv = cv2.cvtColor((img*255).astype(np.uint8), cv2.COLOR_RGB2HSV)
+#   h, s, v = cv2.split(hsv)
+#   hist_h = cv2.calcHist([h], [0], None, [32], [0, 180])
+#   hist_s = cv2.calcHist([s], [0], None, [32], [0, 256])
+#   hist_v = cv2.calcHist([v], [0], None, [32], [0, 256])
+#   hist_hsv = np.concatenate([hist_h, hist_s, hist_v]).flatten()
+#   hist_hsv = hist_hsv / (hist_hsv.sum() + 1e-6)
+
+#   # --- LBP de textura ---
+#   gray = cv2.cvtColor((img*255).astype(np.uint8), cv2.COLOR_RGB2GRAY)
+#   lbp = local_binary_pattern(gray, LBP_P, LBP_R, method="uniform")
+#   n_bins = int(lbp.max() + 1)
+#   lbp_hist, _ = np.histogram(lbp.ravel(), bins=n_bins, range=(0, n_bins))
+#   lbp_hist = lbp_hist / (lbp_hist.sum() + 1e-6)
+
+#   feature_vec = np.concatenate([hist_hsv, lbp_hist])
+#   return feature_vec.reshape(1, -1)
+
+# # ======================
+# # FUNÇÃO PARA TESTAR IMAGEM EXTERNA
+# # ======================
+
+# def testar_imagem_url(url):
+#     caminho = baixar_imagem_url(url, save_path="imagem_externa.jpg")
+
+#     img = cv2.imread(caminho)
+#     if img is None:
+#         print("❌ Erro: imagem não pôde ser carregada.")
+#         return
+
+#     # Converte para RGB
+#     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+#     img_rgb = cv2.resize(img_rgb, IMG_SIZE)
+#     img_rgb = img_rgb.astype("float32") / 255.0
+
+#     # --- Aplicar mesmas normalizações do pipeline ---
+#     img_rgb = segment_fruit(img_rgb)  # segmenta a fruta
+#     img_rgb = apply_clahe(img_rgb)    # equalização local (CLAHE)
+
+#     # --- Extrai features compatíveis com o pipeline ---
+#     X_ext = extract_features_for_url(img_rgb)
+
+#     # Predição
+#     pred_label = pipeline.predict(X_ext)[0]
+#     score = pipeline.decision_function(X_ext)[0] if hasattr(pipeline, "decision_function") else None
+#     classe_str = "🍏 Fresh (0)" if pred_label == 0 else "🍎 Rotten (1)"
+
+#     print("\n🔍 RESULTADO DA CLASSIFICAÇÃO:")
+#     print("--------------------------------")
+#     print(f"🎯 Classe prevista: {classe_str}")
+#     if score is not None:
+#         print(f"📊 Score da SVM (decision_function): {score:.4f} (positivo = Rotten)")
+
+#     # Mostrar imagem
+#     plt.figure(figsize=(4,4))
+#     plt.imshow(img_rgb)
+#     plt.title(f"Predição: {classe_str}")
+#     plt.axis("off")
+#     plt.show()
+
+# # ======================
+# # EXEMPLO DE USO
+# # ======================
+
+# testar_imagem_url("https://thumbs.dreamstime.com/z/morango-com-apodrecimento-fruta-podre-doen%C3%A7as-f%C3%BAngicas-dos-frutos-e-outros-produtos-isolado-sobre-fundo-branco-237464921.jpg")
+# testar_imagem_url("https://storage.googleapis.com/kagglesdsdata/datasets/6076655/9893737/Augmented%20Image/FreshApple/FreshOrange%20%28105%29.jpg?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=databundle-worker-v2%40kaggle-161607.iam.gserviceaccount.com%2F20251203%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20251203T232224Z&X-Goog-Expires=345600&X-Goog-SignedHeaders=host&X-Goog-Signature=4ffe85091b3918a31ae71a326cacccd383e9488f26be7a6cab40514051beb6db27a5840fb54f8e8b0657db0a599c17d2c4c450f516bd47eb7363843b4560daa57f0f79c925819dfce692c61a58942ad68db8773116a5c8f9defd0e650f6ab069c4e443f1b4f80cad0e4ed1f3ab1becd9ecdcb168a46d13b3519e72b5778c49ffeee6b016e6322b88c992cc6ae4515afae06341677b363a1025d00e9e17a94a9035122ba6b387f6d158132ad2ca83586ddee35e7aac6210e178dfd59036cc534972fcb164896a58c963b50ffb180a322ade6f537901c4429d54227e5515f514687888cc17d9aeb582a1031227135cab01f47374d8f3e680f0e1e0eb65bee8c9d9")
+# testar_imagem_url("https://storage.googleapis.com/kagglesdsdata/datasets/6076655/9893737/Augmented%20Image/FreshStrawberry/FreshStrawberry%20%28105%29.jpg?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=databundle-worker-v2%40kaggle-161607.iam.gserviceaccount.com%2F20251206%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20251206T200330Z&X-Goog-Expires=345600&X-Goog-SignedHeaders=host&X-Goog-Signature=64185d869fc434facbfa5c1acad9b66b7c597123dfd13970c6589d5a8175cec865a3659ab8375198d0c2b2c22766812e3b9137eaeb6e3b26ce80568763d64c5862054ffd4bbf44a57424a71d30c74d606bb81dc0339304b4e1807ff610ee95a5b760c69e76528be404eafc39864c272ac0186ba356edbd5b3291011461154df56c706c53cec50cc279d0b9f84b21844c4c7d64c6edced656eb18bfe134351f605217a23afdc4d52a9e56142d6d582f2f1c98aa359bdfe1147307ef1521385d3170f4c78c8cc75d081a3412d8234fa9b0654c546f6f9f9c5ab45e979ec36bfb21b31b8473878aa7e20f730bccd08e33669b6c9fc1d0c3eab9461b3889ce75fb38")
+# testar_imagem_url("https://storage.googleapis.com/kagglesdsdata/datasets/6076655/9893737/Augmented%20Image/RottenStrawberry/RottenStrawberry%20%28110%29.jpg?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=databundle-worker-v2%40kaggle-161607.iam.gserviceaccount.com%2F20251206%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20251206T200349Z&X-Goog-Expires=345600&X-Goog-SignedHeaders=host&X-Goog-Signature=595b7e661014c3e86e60bb9ba35ae0f54d5a1daed409acd5e2809ade71637eb1f8bfd242a6dee3dc2dd5204c3b55b5dfe5748a79f6069ded15a61c7a8a368e5f2d49658eabb1d09074588d67ef9106a520ed15f38b8248976e75b58ab83481712d9cf0e25c5b7a0560be7da71c53ea1540259ec78bc83df6c116d54f651ad2d56016091c6df37e14ded4b8f72f4fe83a7e287c333557f1c993fbd525de75de6dbdfad461500b4847aadae5a319189b829ad0f8024a934246afa2abf90589d93894641e5d889039ed957c79e540ee702a7bcd5a297c98a918c87cdb8410c230d9390cedb52edee3aaad6e798055e7433bcfb84f3d23ce3344085ba8c10dd5c7d7")
+# testar_imagem_url("https://m.media-amazon.com/images/I/71XdMMf9AaL._SL1500_.jpg")
+# testar_imagem_url("https://thumbs.dreamstime.com/z/maracuj%C3%A1-sobreamadurecido-maduro-sobre-fundo-branco-208858448.jpg")#
+# testar_imagem_url("https://media.istockphoto.com/id/147058486/pt/foto/uma-ma%C3%A7%C3%A3-estragada.jpg?s=612x612&w=0&k=20&c=jw9_8CiyM6lbEGqqxqDZXDO1q_F1IvnOQDPFotu6nMw=")
+# testar_imagem_url("https://thumbs.dreamstime.com/b/ma%C3%A7%C3%A3-podre-ilustra-uma-alimenta%C3%A7%C3%A3o-pouco-saud%C3%A1vel-vis%C3%A3o-mais-pr%C3%B3xima-do-decaimento-e-da-comida-n%C3%A3o-geradora-de-ai-301349633.jpg")
+# testar_imagem_url("https://p.turbosquid.com/ts-thumb/NP/Cw8r0m/89kEYlSZ/02/jpg/1422727639/600x600/fit_q87/71c88f46793bc3ffb8d26b64357cf8aaca3749e3/02.jpg")
+# testar_imagem_url("https://images.freeimages.com/images/premium/previews/9308/9308927-rotting-banana.jpg")
+# testar_imagem_url("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRThvypl90QMXvJYvsobeAl2dchu-NBzs0n8A&s")
+# testar_imagem_url("https://thumbs.dreamstime.com/b/morango-podre-com-grande-molde-imagem-disparada-macro-do-close-up-da-o-isolado-no-fundo-branco-123389527.jpg")
+# testar_imagem_url("https://mondiniplantas.cdn.magazord.com.br/img/2025/04/produto/6534/pera-d-agua.jpg?ims=800x800")
+# testar_imagem_url("https://thumbs.dreamstime.com/b/uma-pera-podre-isolada-sobre-fundo-branco-207418869.jpg")
+# testar_imagem_url("https://previews.123rf.com/images/freerlaw/freerlaw1708/freerlaw170800155/84405333-half-of-a-cut-out-rotten-pear-on-white-background.jpg")
+# testar_imagem_url("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSP7NndjZmKlNrl5uIdUs5uwpE_9BjQ66YVkQ&s")
