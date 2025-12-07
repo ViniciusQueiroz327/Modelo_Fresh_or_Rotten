@@ -11,7 +11,7 @@ Este repositório contém todo o material relacionado ao projeto de visão compu
 | **Contextualizacao_do_Problema.docx / .pdf**      | Pesquisa detalhada sobre o problema do desperdício alimentar, seus impactos e a relevância do projeto.                                                                                            |
 | **Desperdicio_Alimentar_Problema_e_Solucao.pptx** | Apresentação de slides que contextualiza o problema.                                                                                                                                              |
 | **Documentacao_do_Modelo.docx / .pdf**            | Documentação técnica do modelo, contendo explicações detalhadas sobre o pipeline de pré-processamento, extração de features, PCA, SVM, métricas e limitações.                                     |
-| **Modelo_Fresh_Rotten.py**                        | Versão antiga do modelo de classificação. ## Utilizar  a nova diretamente no Google Colab: [Abrir no Colab](https://colab.research.google.com/drive/1qGWvekc4GR4pXq_vz3xFTGpCMO8AU3Rj?usp=sharing)   |
+| **Modelo_Fresh_Rotten.py**                        | Versão antiga do modelo de classificação. Utilizar  a nova diretamente no Google Colab: [Abrir no Colab](https://colab.research.google.com/drive/1qGWvekc4GR4pXq_vz3xFTGpCMO8AU3Rj?usp=sharing)   |
 
 
 ## 📌 Como Utilizar
